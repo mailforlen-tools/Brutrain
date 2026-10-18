@@ -207,6 +207,7 @@
 
   <div class="tabs" role="tablist" aria-label="weergave">
     <button role="tab" id="t-plan" aria-selected="true" aria-controls="p-plan" data-i18n="tabPlan">Reisplanner</button>
+    <button role="tab" id="t-here" aria-selected="false" aria-controls="p-here" data-i18n="tabHere">Mijn Station</button>
     <button role="tab" id="t-board" aria-selected="false" aria-controls="p-board" data-i18n="tabBoard">Liveboard</button>
   </div>
 
@@ -247,6 +248,20 @@
       <button class="go" id="loadboard" data-i18n="show">Toon treinen</button>
     </div>
     <div id="board-results"></div>
+  </section>
+
+  <section id="p-here" role="tabpanel" aria-labelledby="t-here" class="hidden">
+    <div class="panel">
+      <p class="planhint" data-i18n="hereHint"></p>
+      <form id="here-form" autocomplete="street-address">
+        <div class="field"><label for="here-q" data-i18n="hereLabel">Straat in Brussel</label>
+          <input type="text" id="here-q" data-i18n-ph="herePh" enterkeyhint="search" style="width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); font:inherit; font-size:15px"></div>
+        <button class="go" id="here-go" type="submit" data-i18n="hereGo">Zoek station</button>
+        <button class="swap" id="here-loc" type="button" data-i18n="hereLoc" style="width:100%; margin-top:8px; font:inherit; font-size:14px">Gebruik mijn locatie</button>
+      </form>
+    </div>
+    <div class="results" id="here-results" aria-live="polite"></div>
+    <p class="agen" id="here-credit"></p>
   </section>
 
   <div class="foot">
@@ -505,7 +520,7 @@ const HUB  = new Set(STATIONS.filter(s=>s[2]).map(s=>s[0]));
 const BXL  = new Set(STATIONS.map(s=>s[0]));
 /* ---- talen / langues / languages / Sprachen ---- */
 const I18N = {
-nl:{concept:"Concept",rights:"Alle rechten voorbehouden",
+nl:{concept:"Concept",tabHere:"Mijn Station",hereHint:"Vul een straat in Brussel in (eventueel met nummer of postcode) en zie het dichtstbijzijnde station. Je zoekopdracht wordt naar OpenStreetMap (Nominatim) gestuurd.",hereLabel:"Straat in Brussel",herePh:"bv. Wetstraat 16",hereGo:"Zoek station",hereLoc:"Gebruik mijn locatie",hereBusy:"Zoeken&hellip;",hereNone:"Adres niet gevonden in Brussel. Probeer een andere schrijfwijze.",hereErr:"Het adres opzoeken lukt niet (geen verbinding met de zoekdienst).",locErr:"Locatie niet beschikbaar (toestemming geweigerd of niet ondersteund).",hereAddr:"Adres: {a}",hereNear:"Dichtstbijzijnde station",hereNext:"Ook in de buurt",hereAlt:"Niet het juiste adres?",hereDist:"{d} hemelsbreed",hereWalk:"&plusmn; {m} min te voet (schatting)",hereG:"Route te voet &middot; Google Maps",hereO:"Route te voet &middot; OpenStreetMap",herePlan:"Plan een rit vanaf dit station",hereCredit:"Adressen: &copy; OpenStreetMap-bijdragers (Nominatim) &middot; stationslocaties: iRail",myLoc:"Mijn locatie",rights:"Alle rechten voorbehouden",
  tag:"De trein nemen in en rond Brussel &mdash; de 34 geweststations plus de luchthaven.",
  src1:"<b>Dienstregeling &amp; vertraging</b>Live via iRail, bovenop de NMBS-realtimegegevens.",
  src2:"<b>Stiptheid</b>Historische regelmaat bij aankomst uit Infrabel open data.",
@@ -533,7 +548,7 @@ nl:{concept:"Concept",rights:"Alle rechten voorbehouden",
  itag:"internationaal &middot; geen binnenlands ticket", alsoBxl:"ook in Brussel:", viaBxl:"via Brussel:",
  bdep:"vertrek", barr:"aankomst", staticTT:"statische dienstregeling", snapAt:"momentopname {t}",
  notInSnap:"Niet in de momentopname."},
-fr:{concept:"Concept",rights:"Tous droits r&eacute;serv&eacute;s",
+fr:{concept:"Concept",tabHere:"Ma gare",hereHint:"Saisissez une rue de Bruxelles (avec num&eacute;ro ou code postal si vous le souhaitez) et voyez la gare la plus proche. Votre recherche est envoy&eacute;e &agrave; OpenStreetMap (Nominatim).",hereLabel:"Rue &agrave; Bruxelles",herePh:"p. ex. Rue de la Loi 16",hereGo:"Chercher la gare",hereLoc:"Utiliser ma position",hereBusy:"Recherche&hellip;",hereNone:"Adresse introuvable &agrave; Bruxelles. Essayez une autre orthographe.",hereErr:"La recherche d&rsquo;adresse a &eacute;chou&eacute; (pas de connexion au service).",locErr:"Position indisponible (autorisation refus&eacute;e ou non prise en charge).",hereAddr:"Adresse&nbsp;: {a}",hereNear:"Gare la plus proche",hereNext:"Aussi &agrave; proximit&eacute;",hereAlt:"Ce n&rsquo;est pas la bonne adresse&nbsp;?",hereDist:"{d} &agrave; vol d&rsquo;oiseau",hereWalk:"&asymp; {m} min &agrave; pied (estimation)",hereG:"Itin&eacute;raire &agrave; pied &middot; Google Maps",hereO:"Itin&eacute;raire &agrave; pied &middot; OpenStreetMap",herePlan:"Planifier un trajet depuis cette gare",hereCredit:"Adresses&nbsp;: &copy; contributeurs OpenStreetMap (Nominatim) &middot; emplacement des gares&nbsp;: iRail",myLoc:"Ma position",rights:"Tous droits r&eacute;serv&eacute;s",
  tag:"Prendre le train &agrave; Bruxelles et alentour &mdash; les 34 gares de la R&eacute;gion plus l&rsquo;a&eacute;roport.",
  src1:"<b>Horaires &amp; retards</b>En direct via iRail, en plus des donn&eacute;es temps r&eacute;el de la SNCB.",
  src2:"<b>Ponctualit&eacute;</b>R&eacute;gularit&eacute; historique &agrave; l&rsquo;arriv&eacute;e, issue des donn&eacute;es ouvertes d&rsquo;Infrabel.",
@@ -561,7 +576,7 @@ fr:{concept:"Concept",rights:"Tous droits r&eacute;serv&eacute;s",
  itag:"international &middot; pas de billet int&eacute;rieur", alsoBxl:"aussi &agrave; Bruxelles&nbsp;:", viaBxl:"via Bruxelles&nbsp;:",
  bdep:"d&eacute;part", barr:"arriv&eacute;e", staticTT:"horaire statique", snapAt:"instantan&eacute; {t}",
  notInSnap:"Absent de l&rsquo;instantan&eacute;."},
-en:{concept:"Draft",rights:"All rights reserved",
+en:{concept:"Draft",tabHere:"My station",hereHint:"Enter a street in Brussels (optionally with number or postcode) and see the nearest station. Your search is sent to OpenStreetMap (Nominatim).",hereLabel:"Street in Brussels",herePh:"e.g. Wetstraat 16",hereGo:"Find station",hereLoc:"Use my location",hereBusy:"Searching&hellip;",hereNone:"Address not found in Brussels. Try a different spelling.",hereErr:"Address lookup failed (no connection to the search service).",locErr:"Location unavailable (permission denied or not supported).",hereAddr:"Address: {a}",hereNear:"Nearest station",hereNext:"Also nearby",hereAlt:"Not the right address?",hereDist:"{d} as the crow flies",hereWalk:"&asymp; {m} min on foot (estimate)",hereG:"Walking route &middot; Google Maps",hereO:"Walking route &middot; OpenStreetMap",herePlan:"Plan a trip from this station",hereCredit:"Addresses: &copy; OpenStreetMap contributors (Nominatim) &middot; station locations: iRail",myLoc:"My location",rights:"All rights reserved",
  tag:"Taking the train in and around Brussels &mdash; the 34 stations in the Region plus the airport.",
  src1:"<b>Timetable &amp; delays</b>Live via iRail, on top of the NMBS/SNCB real-time data.",
  src2:"<b>Punctuality</b>Historical arrival punctuality from Infrabel open data.",
@@ -589,7 +604,7 @@ en:{concept:"Draft",rights:"All rights reserved",
  itag:"international &middot; no domestic ticket", alsoBxl:"also in Brussels:", viaBxl:"via Brussels:",
  bdep:"departures", barr:"arrivals", staticTT:"static timetable", snapAt:"snapshot {t}",
  notInSnap:"Not in the snapshot."},
-de:{concept:"Entwurf",rights:"Alle Rechte vorbehalten",
+de:{concept:"Entwurf",tabHere:"Meine Station",hereHint:"Geben Sie eine Stra&szlig;e in Br&uuml;ssel ein (optional mit Hausnummer oder Postleitzahl) und sehen Sie den n&auml;chsten Bahnhof. Ihre Suche wird an OpenStreetMap (Nominatim) gesendet.",hereLabel:"Stra&szlig;e in Br&uuml;ssel",herePh:"z.&thinsp;B. Wetstraat 16",hereGo:"Bahnhof suchen",hereLoc:"Meinen Standort verwenden",hereBusy:"Suche&hellip;",hereNone:"Adresse in Br&uuml;ssel nicht gefunden. Versuchen Sie eine andere Schreibweise.",hereErr:"Die Adresssuche ist fehlgeschlagen (keine Verbindung zum Suchdienst).",locErr:"Standort nicht verf&uuml;gbar (Berechtigung verweigert oder nicht unterst&uuml;tzt).",hereAddr:"Adresse: {a}",hereNear:"N&auml;chster Bahnhof",hereNext:"Auch in der N&auml;he",hereAlt:"Nicht die richtige Adresse?",hereDist:"{d} Luftlinie",hereWalk:"&asymp; {m} Min. zu Fu&szlig; (Sch&auml;tzung)",hereG:"Fu&szlig;weg &middot; Google Maps",hereO:"Fu&szlig;weg &middot; OpenStreetMap",herePlan:"Fahrt ab diesem Bahnhof planen",hereCredit:"Adressen: &copy; OpenStreetMap-Mitwirkende (Nominatim) &middot; Bahnhofsstandorte: iRail",myLoc:"Mein Standort",rights:"Alle Rechte vorbehalten",
  tag:"Mit dem Zug in und um Br&uuml;ssel &mdash; die 34 Bahnh&ouml;fe der Region plus der Flughafen.",
  src1:"<b>Fahrplan &amp; Versp&auml;tungen</b>Live &uuml;ber iRail, auf Basis der Echtzeitdaten der NMBS/SNCB.",
  src2:"<b>P&uuml;nktlichkeit</b>Historische Ankunftsp&uuml;nktlichkeit aus den offenen Daten von Infrabel.",
@@ -617,7 +632,7 @@ de:{concept:"Entwurf",rights:"Alle Rechte vorbehalten",
  itag:"international &middot; kein Inlandsticket", alsoBxl:"auch in Br&uuml;ssel:", viaBxl:"&uuml;ber Br&uuml;ssel:",
  bdep:"Abfahrt", barr:"Ankunft", staticTT:"statischer Fahrplan", snapAt:"Momentaufnahme {t}",
  notInSnap:"Nicht in der Momentaufnahme."},
-es:{concept:"Borrador",rights:"Todos los derechos reservados",
+es:{concept:"Borrador",tabHere:"Mi estaci&oacute;n",hereHint:"Introduzca una calle de Bruselas (opcionalmente con n&uacute;mero o c&oacute;digo postal) y vea la estaci&oacute;n m&aacute;s cercana. Su b&uacute;squeda se env&iacute;a a OpenStreetMap (Nominatim).",hereLabel:"Calle en Bruselas",herePh:"p. ej. Wetstraat 16",hereGo:"Buscar estaci&oacute;n",hereLoc:"Usar mi ubicaci&oacute;n",hereBusy:"Buscando&hellip;",hereNone:"Direcci&oacute;n no encontrada en Bruselas. Pruebe con otra grafía.",hereErr:"Fall&oacute; la b&uacute;squeda de la direcci&oacute;n (sin conexi&oacute;n con el servicio).",locErr:"Ubicaci&oacute;n no disponible (permiso denegado o no compatible).",hereAddr:"Direcci&oacute;n: {a}",hereNear:"Estaci&oacute;n m&aacute;s cercana",hereNext:"Tambi&eacute;n cerca",hereAlt:"&iquest;No es la direcci&oacute;n correcta?",hereDist:"{d} en l&iacute;nea recta",hereWalk:"&asymp; {m} min a pie (estimaci&oacute;n)",hereG:"Ruta a pie &middot; Google Maps",hereO:"Ruta a pie &middot; OpenStreetMap",herePlan:"Planificar un viaje desde esta estaci&oacute;n",hereCredit:"Direcciones: &copy; colaboradores de OpenStreetMap (Nominatim) &middot; ubicaci&oacute;n de estaciones: iRail",myLoc:"Mi ubicaci&oacute;n",rights:"Todos los derechos reservados",
  tag:"Tomar el tren en Bruselas y alrededores &mdash; las 34 estaciones de la Regi&oacute;n m&aacute;s el aeropuerto.",
  src1:"<b>Horarios y retrasos</b>En directo v&iacute;a iRail, sobre los datos en tiempo real de NMBS/SNCB.",
  src2:"<b>Puntualidad</b>Puntualidad hist&oacute;rica a la llegada, a partir de los datos abiertos de Infrabel.",
@@ -689,6 +704,7 @@ document.querySelectorAll('[role=tab]').forEach(b=>b.addEventListener("click",()
   document.querySelectorAll('[role=tab]').forEach(x=>x.setAttribute("aria-selected", x===b));
   document.getElementById("p-plan").classList.toggle("hidden", b.id!=="t-plan");
   document.getElementById("p-board").classList.toggle("hidden", b.id!=="t-board");
+  document.getElementById("p-here").classList.toggle("hidden", b.id!=="t-here");
 }));
 function seg(id,cb){
   const g=document.getElementById(id);
@@ -1024,13 +1040,77 @@ function boardOffline(stationId,ad){
 }
 document.getElementById("loadboard").addEventListener("click",loadBoard);
 
+/* ---- Mijn Station: dichtstbijzijnde station bij een adres ---- */
+/* coordinaten (lat, lon) uit de iRail-stationslijst: https://github.com/iRail/stations */
+const COORDS = {"BE.NMBS.008814001":[50.83571,4.33653],"BE.NMBS.008813003":[50.84566,4.3568],"BE.NMBS.008812005":[50.85966,4.36085],"BE.NMBS.008819406":[50.89646,4.48208],"BE.NMBS.008813045":[50.85207,4.36205],"BE.NMBS.008813037":[50.84113,4.34787],"BE.NMBS.008811304":[50.83894,4.37367],"BE.NMBS.008811916":[50.84328,4.38072],"BE.NMBS.008815040":[50.84855,4.32104],"BE.NMBS.008811007":[50.87851,4.37864],"BE.NMBS.008812021":[50.87943,4.34851],"BE.NMBS.008811163":[50.87779,4.41003],"BE.NMBS.008811155":[50.88888,4.41998],"BE.NMBS.008811130":[50.8897,4.41536],"BE.NMBS.008811106":[50.86778,4.40097],"BE.NMBS.008811171":[50.85407,4.39442],"BE.NMBS.008811197":[50.83928,4.39893],"BE.NMBS.008811403":[50.82993,4.37866],"BE.NMBS.008811205":[50.81836,4.40387],"BE.NMBS.008811411":[50.82219,4.38951],"BE.NMBS.008811429":[50.80917,4.39989],"BE.NMBS.008811437":[50.7947,4.40811],"BE.NMBS.008814456":[50.80166,4.39339],"BE.NMBS.008814464":[50.79615,4.37405],"BE.NMBS.008814134":[50.79175,4.33221],"BE.NMBS.008814126":[50.80241,4.3239],"BE.NMBS.008814431":[50.77832,4.33073],"BE.NMBS.008814449":[50.79441,4.36276],"BE.NMBS.008814118":[50.8102,4.32094],"BE.NMBS.008814373":[50.80922,4.30917],"BE.NMBS.008812211":[50.87262,4.28989],"BE.NMBS.008812047":[50.88083,4.32622],"BE.NMBS.008811940":[50.8179,4.2918],"BE.NMBS.008814472":[50.80972,4.39833]};
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function hav(a,b){ const R=6371000,r=Math.PI/180, dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r;
+  const x=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+function fmtDist(m){ return m<1000 ? (Math.round(m/10)*10)+" m"
+  : (m/1000).toLocaleString(LOCALE[LANG],{maximumFractionDigits:1})+" km"; }
+const hereBox=document.getElementById("here-results");
+let hereLast=null, hereAlts=[];
+function hereMsg(k){ hereLast=null; hereBox.innerHTML='<div class="msg">'+t(k)+'</div>'; }
+function stCard(id,pt,first){
+  const c=COORDS[id], d=hav([pt.lat,pt.lon],c), m=Math.max(1,Math.round(d*1.3/80));
+  const g=`https://www.google.com/maps/dir/?api=1&origin=${pt.lat},${pt.lon}&destination=${c[0]},${c[1]}&travelmode=walking`;
+  const o=`https://www.openstreetmap.org/directions?engine=fossgis_osrm_foot&route=${pt.lat}%2C${pt.lon}%3B${c[0]}%2C${c[1]}`;
+  return `<div class="conn"><div class="top"><span class="tt">${esc(NAME[id])}</span>
+    <span class="meta">${first?t("hereNear"):t("hereNext")}</span></div>
+    <div class="train" style="margin-top:4px">${t("hereDist",{d:fmtDist(d)})} &middot; ${t("hereWalk",{m})}</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:8px; font-size:14px">
+      <a href="${g}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-bright)">${t("hereG")}</a>
+      <a href="${o}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-bright)">${t("hereO")}</a>
+      <a href="#" data-plan="${id}" style="color:var(--accent-bright)">${t("herePlan")}</a></div></div>`;
+}
+function showNearest(pt){
+  hereLast=pt;
+  const ids=Object.keys(COORDS).sort((a,b)=>hav([pt.lat,pt.lon],COORDS[a])-hav([pt.lat,pt.lon],COORDS[b])).slice(0,3);
+  let h=`<div class="frozen" style="margin:0 0 2px">${t("hereAddr",{a:esc(pt.label)})}</div>`
+    +ids.map((id,i)=>stCard(id,pt,i===0)).join("");
+  if(hereAlts.length>1) h+=`<details class="abox plan"><summary>${t("hereAlt")}</summary><div style="display:flex; flex-direction:column; gap:6px; margin-top:8px">`
+    +hereAlts.map((a,i)=>`<button type="button" class="swap" data-alt="${i}" style="text-align:left; font:inherit; font-size:13.5px">${esc(a.label)}</button>`).join("")+`</div></details>`;
+  hereBox.innerHTML=h;
+}
+hereBox.addEventListener("click",e=>{
+  const pl=e.target.closest("[data-plan]");
+  if(pl){ e.preventDefault(); fromSel.value=pl.dataset.plan; document.getElementById("t-plan").click(); doSearch(); return; }
+  const al=e.target.closest("[data-alt]");
+  if(al) showNearest(hereAlts[+al.dataset.alt]);
+});
+async function geocode(q){
+  const u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=be&bounded=1&viewbox=4.24,50.92,4.50,50.76&accept-language="
+    +LANG+"&q="+encodeURIComponent(q);
+  const r=await fetch(u,{headers:{"Accept":"application/json"}});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return (await r.json()).map(x=>({lat:+x.lat,lon:+x.lon,label:String(x.display_name).split(",").slice(0,4).join(",").trim()}));
+}
+document.getElementById("here-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const q=document.getElementById("here-q").value.trim(); if(!q) return;
+  const btn=document.getElementById("here-go"); btn.disabled=true; hereBox.innerHTML='<div class="msg">'+t("hereBusy")+'</div>';
+  try{ hereAlts=await geocode(q); if(hereAlts.length) showNearest(hereAlts[0]); else hereMsg("hereNone"); }
+  catch(err){ hereMsg("hereErr"); }
+  btn.disabled=false;
+});
+document.getElementById("here-loc").addEventListener("click",()=>{
+  if(!navigator.geolocation){ hereMsg("locErr"); return; }
+  hereBox.innerHTML='<div class="msg">'+t("hereBusy")+'</div>';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{ hereAlts=[]; showNearest({lat:pos.coords.latitude,lon:pos.coords.longitude,label:t("myLoc")}); },
+    ()=>hereMsg("locErr"), {timeout:15000});
+});
+
 /* ---- taal ---- */
 function applyLang(){
   document.documentElement.lang=LANG;
   document.querySelectorAll("[data-i18n]").forEach(el=>{ el.innerHTML=t(el.dataset.i18n); });
   document.getElementById("swap").title=t("swap"); document.getElementById("swap").setAttribute("aria-label",t("swap"));
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.l===LANG));
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{ const d=document.createElement("textarea"); d.innerHTML=t(el.dataset.i18nPh); el.placeholder=d.value; });
+  document.getElementById("here-credit").innerHTML=t("hereCredit");
   setSnap(); renderAlerts(); renderHist();
+  if(hereLast) showNearest(hereLast);
 }
 document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{
   LANG=b.dataset.l; try{ localStorage.setItem("brutrain-lang",LANG); }catch(e){}
